@@ -9,12 +9,60 @@ object MqttMessage {
 
 import MqttMessage._
 
-trait MessageType
+sealed trait MessageType
+case class ConnectMessageType extends MessageType
+case class ConnAckMessageType extends MessageType
+case class PublishMessageType extends MessageType
+case class PubAckMessageType extends MessageType
+case class PubRecMessageType extends MessageType
+case class PubRelMessageType extends MessageType
+case class PubCompMessageType extends MessageType
+case class SubscribeMessageType extends MessageType
+case class SubAckMessageType extends MessageType
+case class UnsubscribeMessageType extends MessageType
+case class UnsubAckMessageType extends MessageType
+case class PingReqMessageType extends MessageType
+case class PingRespMessageType extends MessageType
+case class DisconnectMessageType extends MessageType
+case class UnknownMessageType extends MessageType
 
+object MessageType {
+  def get(number: Int): MessageType = {
+    number match {
+      case 1 => ConnectMessageType()
+      case 2 => ConnAckMessageType()
+      case 3 => PublishMessageType()
+      case 4 => PubAckMessageType()
+      case 5 => PubRecMessageType()
+      case 6 => PubRelMessageType()
+      case 7 => PubCompMessageType()
+      case 8 => SubscribeMessageType()
+      case 9 => SubAckMessageType()
+      case 10 => UnsubscribeMessageType()
+      case 11 => UnsubAckMessageType()
+      case 12 => PingReqMessageType()
+      case 13 => PingRespMessageType()
+      case 14 => DisconnectMessageType()
+      case _ => UnknownMessageType()
+    }
+  }
+}
+
+object QoS {
+  def get(number: Int): QoS = {
+    number match {
+      case 0 => QoS_0()
+      case 1 => QoS_1()
+      case 2 => QoS_2()
+      case _ => UnknownQoS()
+    }
+  }
+}
 sealed trait QoS
 case class QoS_0 extends QoS
 case class QoS_1 extends QoS
 case class QoS_2 extends QoS
+case class UnknownQoS extends QoS
 
 sealed trait ConnectReturnCode
 case class ConnectionAccepted extends ConnectReturnCode
@@ -24,46 +72,44 @@ case class ConnectionRefusedServerUnavailable extends ConnectReturnCode
 case class ConnectionRefusedBadCredentials extends ConnectReturnCode
 case class ConnectionRefusedNotAuthorized extends ConnectReturnCode
 
-class MqttHeader(messageType: MessageType, duplicate: Boolean, qos: QoS, retain: Boolean, length: Int)
+case class MqttHeader(messageType: MessageType, duplicate: Boolean, qos: QoS, retain: Boolean, length: Int)
 
-class MqttConnect(header: MqttHeader, variableHeaders: ConnectHeader, payload: ConnectPayload)
-class ConnectHeader(protocolName: String, protocolVersion: Int, connectFlags: ConnectFlags, keepAlive: Int)
-class ConnectFlags(hasUsername: Boolean, hasPassword: Boolean, hasWillRetain: Boolean, hasWillQoS: Boolean, hasWill: Boolean, hasCleanSession: Boolean)
-class ConnectPayload(clientId: String, willTopic: Topic, willMessage: String, username: String, password: String)
+sealed trait VariableHeader
+case class MessageIdHeader(messageId: MessageId) extends VariableHeader
 
-class MqttConnAck(header: MqttHeader, variableHeader: ConnAckHeader)
-class ConnAckHeader(returnCode: ConnectReturnCode)
+sealed trait Payload
 
-class MqttPublish(header: MqttHeader, variableHeader: PublishHeader)
-class PublishHeader(topic: Topic, messageId: MessageId, payload: String)
 
-class MqttPubAck(header: MqttHeader, variableHeader: PubAckHeader)
-class PubAckHeader(messageId: MessageId)
+case class MqttConnect(header: MqttHeader, variableHeaders: ConnectHeader, payload: ConnectPayload)
+case class ConnectHeader(protocolName: String, protocolVersion: Int, connectFlags: ConnectFlags, keepAlive: Int) extends VariableHeader
+case class ConnectFlags(hasUsername: Boolean, hasPassword: Boolean, hasWillRetain: Boolean, willQoS: QoS, hasWill: Boolean, cleanSession: Boolean)
+case class ConnectPayload(clientId: String, willTopic: Option[Topic], willMessage: Option[String], username: Option[String], password: Option[String]) extends Payload
 
-class MqttPubRec(header: MqttHeader, variableHeader: PubRecHeader)
-class PubRecHeader(messageId: MessageId)
+case class MqttConnAck(header: MqttHeader, variableHeader: ConnAckHeader)
+case class ConnAckHeader(returnCode: ConnectReturnCode) extends VariableHeader
 
-class MqttPubRel(header: MqttHeader, variableHeader: PubRelHeader)
-class PubRelHeader(messageId: MessageId)
+case class MqttPublish(header: MqttHeader, variableHeader: PublishHeader)
+case class PublishHeader(topic: Topic, messageId: MessageId, payload: String) extends VariableHeader
 
-class MqttPubComp(header: MqttHeader, variableHeader: PubCompHeader)
-class PubCompHeader(messageId: MessageId)
+case class MqttPubAck(header: MqttHeader, variableHeader: MessageIdHeader)
 
-class MqttSubscribe(header: MqttHeader, variableHeader: SubscribeHeader, payload: List[Subscription])
-class SubscribeHeader(messageId: MessageId)
-class Subscription(topic: Topic, qos: QoS)
+case class MqttPubRec(header: MqttHeader, variableHeader: MessageIdHeader)
 
-class MqttSubAck(header: MqttHeader, variableHeader: SubAckHeader, payload: List[QoS])
-class SubAckHeader(messageId: MessageId)
+case class MqttPubRel(header: MqttHeader, variableHeader: MessageIdHeader)
 
-class MqttUnsubscribe(header: MqttHeader, variableHeader: UnsubscribeHeader, topics: List[Topic])
-class UnsubscribeHeader(messageId: MessageId)
+case class MqttPubComp(header: MqttHeader, variableHeader: MessageIdHeader)
 
-class MqttUnsubAck(header: MqttHeader, variableHeader: UnsubAckHeader)
-class UnsubAckHeader(messageId: MessageId)
+case class MqttSubscribe(header: MqttHeader, variableHeader: MessageIdHeader, payload: List[Subscription])
+case class Subscription(topic: Topic, qos: QoS)
 
-class MqttPingReq(header: MqttHeader)
+case class MqttSubAck(header: MqttHeader, variableHeader: MessageIdHeader, payload: List[QoS])
 
-class MqttPingResp(header: MqttHeader)
+case class MqttUnsubscribe(header: MqttHeader, variableHeader: MessageIdHeader, topics: List[Topic])
 
-class MqttDisconnect(header: MqttHeader)
+case class MqttUnsubAck(header: MqttHeader, variableHeader: MessageIdHeader)
+
+case class MqttPingReq(header: MqttHeader)
+
+case class MqttPingResp(header: MqttHeader)
+
+case class MqttDisconnect(header: MqttHeader)
