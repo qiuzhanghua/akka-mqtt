@@ -1,16 +1,18 @@
 package fr.sertelon.mqtt
 
-import akka.actor.Actor
+import akka.actor._
 import akka.util.ByteString
 import akka.util.ByteIterator
-import fr.sertelon.mqtt.model._
+import model._
+import model.MqttMessage._
 
 class Decoder extends Actor {
 
+  val broker = context.system.actorOf(Props[Broker], "broker")
+  
   def receive = {
-    case bs: ByteString =>
-      val variableHeader = getMqttMessage(bs)
-      println(variableHeader)
+    case (sender: ActorRef, bs: ByteString) =>
+      broker ! (sender, getMqttMessage(bs))
   }
 
   def getMqttMessage(bs: ByteString) = {
@@ -30,6 +32,7 @@ class Decoder extends Actor {
         getConnectMessage(header, it)
       case ConnAckMessageType =>
       case PublishMessageType =>
+        getPublishMessage(header, it)
       case PubAckMessageType =>
       case PubRecMessageType =>
       case PubRelMessageType =>
@@ -49,7 +52,7 @@ class Decoder extends Actor {
   // Parsers
 
   def getConnectMessage(header: MqttHeader, it: ByteIterator) = {
-    val protocolName = getUTF8String(it)
+    val protocolName = getUTF8String(it)._2
     val versionNumber: Int = it.getByte
 
     // Connect flags
@@ -64,22 +67,31 @@ class Decoder extends Actor {
     val flags = ConnectFlags(hasUsername, hasPassword, hasWillRetain, QoS.get(willQoS), hasWill, cleanSession)
     val keepAlive = (it.getByte >>> 8) + it.getByte
 
-    val clientId = getUTF8String(it)
-    val willTopic = if (hasWill) Some(getUTF8String(it)) else None
-    val willMessage = if (hasWill) Some(getUTF8String(it)) else None
-    val username = if (hasUsername) Some(getUTF8String(it)) else None
-    val password = if (hasPassword) Some(getUTF8String(it)) else None
+    val clientId = getUTF8String(it)._2
+    val willTopic = if (hasWill) Some(getUTF8String(it)._2) else None
+    val willMessage = if (hasWill) Some(getUTF8String(it)._2) else None
+    val username = if (hasUsername) Some(getUTF8String(it)._2) else None
+    val password = if (hasPassword) Some(getUTF8String(it)._2) else None
 
     MqttConnect(header, ConnectHeader(protocolName, versionNumber, flags, keepAlive), ConnectPayload(clientId, willTopic, willMessage, username, password))
+  }
+  
+  def getPublishMessage(header: MqttHeader, it: ByteIterator) = {
+    val (topicLength, topic) = getUTF8String(it)
+    val msgId = ((it.getByte >>> 8) + it.getByte).toChar
+  
+    val payload = Some(it.mkString(","))
+    
+    MqttPublish(header, PublishHeader(topic, msgId), payload)
   }
 
   // Utils
 
-  def getUTF8String(it: ByteIterator): String = {
+  def getUTF8String(it: ByteIterator): (Int, String) = {
     val strLength = (it.getByte >>> 8) + it.getByte
     val bytes = new Array[Byte](strLength)
     it getBytes bytes
-    ByteString(bytes).utf8String
+    (strLength + 2, ByteString(bytes).utf8String)
   }
 
   implicit def intToBoolean(i: Int) = if (i == 1) true else false

@@ -13,12 +13,12 @@ sealed trait MqttMessage
 case class MqttHeader(messageType: MessageType, duplicate: Boolean, qos: QoS, retain: Boolean, length: Int)
 case class MessageIdHeader(messageId: MessageId)
 
-case class MqttConnect(header: MqttHeader, variableHeaders: ConnectHeader, payload: ConnectPayload)
+case class MqttConnect(header: MqttHeader, variableHeaders: ConnectHeader, payload: ConnectPayload) extends MqttMessage
 case class ConnectHeader(protocolName: String, protocolVersion: Int, connectFlags: ConnectFlags, keepAlive: Int)
 case class ConnectFlags(hasUsername: Boolean, hasPassword: Boolean, hasWillRetain: Boolean, willQoS: QoS, hasWill: Boolean, cleanSession: Boolean)
 case class ConnectPayload(clientId: String, willTopic: Option[Topic], willMessage: Option[String], username: Option[String], password: Option[String])
 
-case class MqttConnAck(header: MqttHeader, variableHeader: ConnectReturnCode)
+case class MqttConnAck(header: MqttHeader, variableHeader: ConnectReturnCode) extends MqttMessage
 sealed trait ConnectReturnCode
 case object ConnectionAccepted extends ConnectReturnCode
 case object ConnectionRefusedProtocolVersion extends ConnectReturnCode
@@ -27,8 +27,8 @@ case object ConnectionRefusedServerUnavailable extends ConnectReturnCode
 case object ConnectionRefusedBadCredentials extends ConnectReturnCode
 case object ConnectionRefusedNotAuthorized extends ConnectReturnCode
 
-case class MqttPublish(header: MqttHeader, variableHeader: PublishHeader)
-case class PublishHeader(topic: Topic, messageId: MessageId, payload: String) 
+case class MqttPublish(header: MqttHeader, variableHeader: PublishHeader, payload: Option[String]) extends MqttMessage
+case class PublishHeader(topic: Topic, messageId: MessageId) 
 
 case class MqttPubAck(header: MqttHeader, variableHeader: MessageIdHeader)
 

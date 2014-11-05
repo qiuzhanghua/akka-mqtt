@@ -1,13 +1,13 @@
 package fr.sertelon.mqtt
 
-import akka.actor.{ Actor, ActorRef, Props, ActorSystem }
-import akka.io.{ IO, Tcp }
+import akka.actor._
+import akka.io._
 import akka.util.ByteString
 import java.net.InetSocketAddress
 
 object Main extends App {
   val system = ActorSystem("Akka-MQTT-Broker")
-    system.actorOf(Props[Server])
+  system.actorOf(Props[Server], "server")
 }
 
 class Server extends Actor {
@@ -24,7 +24,7 @@ class Server extends Actor {
       context stop self
     case c @ Connected(remote, local) =>
       val handler = context.actorOf(Props[SimplisticHandler])
-      val connection = sender()
+      val connection = sender
       connection ! Register(handler)
   }
   
@@ -33,10 +33,10 @@ class Server extends Actor {
 class SimplisticHandler extends Actor {
   import Tcp._
   
-  val decoder = context.actorOf(Props[Decoder])
+  val decoder = context.system.actorOf(Props[Decoder], "decoder")
   
   def receive = {
-    case Received(data) => decoder ! data
+    case Received(data) => decoder ! (sender, data)
     case PeerClosed => context stop self
   }
 }
