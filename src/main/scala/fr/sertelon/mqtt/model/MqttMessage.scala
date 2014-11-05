@@ -20,12 +20,12 @@ case class ConnectPayload(clientId: String, willTopic: Option[Topic], willMessag
 
 case class MqttConnAck(header: MqttHeader, variableHeader: ConnectReturnCode)
 sealed trait ConnectReturnCode
-case class ConnectionAccepted extends ConnectReturnCode
-case class ConnectionRefusedProtocolVersion extends ConnectReturnCode
-case class ConnectionRefusedIdentifierRejected extends ConnectReturnCode
-case class ConnectionRefusedServerUnavailable extends ConnectReturnCode
-case class ConnectionRefusedBadCredentials extends ConnectReturnCode
-case class ConnectionRefusedNotAuthorized extends ConnectReturnCode
+case object ConnectionAccepted extends ConnectReturnCode
+case object ConnectionRefusedProtocolVersion extends ConnectReturnCode
+case object ConnectionRefusedIdentifierRejected extends ConnectReturnCode
+case object ConnectionRefusedServerUnavailable extends ConnectReturnCode
+case object ConnectionRefusedBadCredentials extends ConnectReturnCode
+case object ConnectionRefusedNotAuthorized extends ConnectReturnCode
 
 case class MqttPublish(header: MqttHeader, variableHeader: PublishHeader)
 case class PublishHeader(topic: Topic, messageId: MessageId, payload: String) 

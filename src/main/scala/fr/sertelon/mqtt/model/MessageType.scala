@@ -1,40 +1,40 @@
 package fr.sertelon.mqtt.model
 
 sealed trait MessageType
-case class ConnectMessageType extends MessageType
-case class ConnAckMessageType extends MessageType
-case class PublishMessageType extends MessageType
-case class PubAckMessageType extends MessageType
-case class PubRecMessageType extends MessageType
-case class PubRelMessageType extends MessageType
-case class PubCompMessageType extends MessageType
-case class SubscribeMessageType extends MessageType
-case class SubAckMessageType extends MessageType
-case class UnsubscribeMessageType extends MessageType
-case class UnsubAckMessageType extends MessageType
-case class PingReqMessageType extends MessageType
-case class PingRespMessageType extends MessageType
-case class DisconnectMessageType extends MessageType
-case class UnknownMessageType extends MessageType
+case object ConnectMessageType extends MessageType
+case object ConnAckMessageType extends MessageType
+case object PublishMessageType extends MessageType
+case object PubAckMessageType extends MessageType
+case object PubRecMessageType extends MessageType
+case object PubRelMessageType extends MessageType
+case object PubCompMessageType extends MessageType
+case object SubscribeMessageType extends MessageType
+case object SubAckMessageType extends MessageType
+case object UnsubscribeMessageType extends MessageType
+case object UnsubAckMessageType extends MessageType
+case object PingReqMessageType extends MessageType
+case object PingRespMessageType extends MessageType
+case object DisconnectMessageType extends MessageType
+case object UnknownMessageType extends MessageType
 
 object MessageType {
   def get(number: Int): MessageType = {
     number match {
-      case 1 => ConnectMessageType()
-      case 2 => ConnAckMessageType()
-      case 3 => PublishMessageType()
-      case 4 => PubAckMessageType()
-      case 5 => PubRecMessageType()
-      case 6 => PubRelMessageType()
-      case 7 => PubCompMessageType()
-      case 8 => SubscribeMessageType()
-      case 9 => SubAckMessageType()
-      case 10 => UnsubscribeMessageType()
-      case 11 => UnsubAckMessageType()
-      case 12 => PingReqMessageType()
-      case 13 => PingRespMessageType()
-      case 14 => DisconnectMessageType()
-      case _ => UnknownMessageType()
+      case 1 => ConnectMessageType
+      case 2 => ConnAckMessageType
+      case 3 => PublishMessageType
+      case 4 => PubAckMessageType
+      case 5 => PubRecMessageType
+      case 6 => PubRelMessageType
+      case 7 => PubCompMessageType
+      case 8 => SubscribeMessageType
+      case 9 => SubAckMessageType
+      case 10 => UnsubscribeMessageType
+      case 11 => UnsubAckMessageType
+      case 12 => PingReqMessageType
+      case 13 => PingRespMessageType
+      case 14 => DisconnectMessageType
+      case _ => UnknownMessageType
     }
   }
 }

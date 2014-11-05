@@ -14,7 +14,7 @@ class Decoder extends Actor {
   }
 
   def getMqttMessage(bs: ByteString) = {
-	val it = bs.iterator
+	  val it = bs.iterator
     val firstByte = it.getByte
 
     val messageType = MessageType.get((firstByte & 0xF0) >>> 4)
@@ -26,22 +26,22 @@ class Decoder extends Actor {
     val header = MqttHeader(messageType, dup, QoS.get(qos), retain, length)
     
     messageType match {
-      case ConnectMessageType() =>
+      case ConnectMessageType =>
         getConnectMessage(header, it)
-      case ConnAckMessageType() =>
-      case PublishMessageType() =>
-      case PubAckMessageType() =>
-      case PubRecMessageType() =>
-      case PubRelMessageType() =>
-      case PubCompMessageType() =>
-      case SubscribeMessageType() =>
-      case SubAckMessageType() =>
-      case UnsubscribeMessageType() =>
-      case UnsubAckMessageType() =>
-      case PingReqMessageType() =>
-      case PingRespMessageType() =>
-      case DisconnectMessageType() =>
-      case UnknownMessageType() =>
+      case ConnAckMessageType =>
+      case PublishMessageType =>
+      case PubAckMessageType =>
+      case PubRecMessageType =>
+      case PubRelMessageType =>
+      case PubCompMessageType =>
+      case SubscribeMessageType =>
+      case SubAckMessageType =>
+      case UnsubscribeMessageType =>
+      case UnsubAckMessageType =>
+      case PingReqMessageType =>
+      case PingRespMessageType =>
+      case DisconnectMessageType =>
+      case UnknownMessageType =>
 
     }
   }
