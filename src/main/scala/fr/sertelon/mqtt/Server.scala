@@ -19,7 +19,7 @@ class Server extends Actor {
   
   def receive = {
     case b @ Bound(localAddress) =>
-      println("hello");
+      println("MQTT broker listening on localhost:1883");
     case CommandFailed(_ : Bind) =>
       context stop self
     case c @ Connected(remote, local) =>
