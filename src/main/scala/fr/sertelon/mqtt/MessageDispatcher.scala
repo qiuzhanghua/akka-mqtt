@@ -8,10 +8,6 @@ import model._
 import model.MqttMessage._
 
 class MessageDispatcher extends Actor {
-  import ConnectMessageHandler._
-  import PublishMessageHandler._
-  import PingMessageHandler._
-  import SubscribeMessageHandler._
   import Tcp._
 
   val connectHandler = context.actorOf(Props[ConnectMessageHandler])
@@ -24,10 +20,10 @@ class MessageDispatcher extends Actor {
       val mqttMsg = getMqttMessage(data)
 
       mqttMsg match {
-        case con : ConnectMqttMessage => connectHandler ! ConnectMessage(con, sender)
-        case pub : PublishMqttMessage => publishHandler ! PublishMessage(pub, sender)
-        case pin : PingMqttMessage => pingHandler ! PingMessage(pin, sender)
-        case sub : SubscribeMqttMessage => subscribeHandler ! SubscribeMessage(sub, sender)
+        case con : ConnectMqttMessage => connectHandler ! (con, sender)
+        case pub : PublishMqttMessage => publishHandler ! (pub, sender)
+        case pin : PingMqttMessage => pingHandler ! (pin, sender)
+        case sub : SubscribeMqttMessage => subscribeHandler ! (sub, sender)
       }
     }
     case PeerClosed => {
