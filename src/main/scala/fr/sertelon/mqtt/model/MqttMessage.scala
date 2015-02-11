@@ -34,7 +34,7 @@ case class MqttDisconnect(header: MqttHeader) extends ConnectMqttMessage
 // Publishing related messages
 sealed trait PublishMqttMessage extends MqttMessage
 
-case class MqttPublish(header: MqttHeader, publishHeader: PublishHeader, payload: Option[String]) extends PublishMqttMessage
+case class MqttPublish(header: MqttHeader, publishHeader: PublishHeader, payload: Option[Array[Byte]]) extends PublishMqttMessage
 case class PublishHeader(topic: Topic, messageId: MessageId) 
 
 case class MqttPubAck(header: MqttHeader, messageId: MessageId) extends PublishMqttMessage

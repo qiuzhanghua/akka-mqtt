@@ -18,7 +18,7 @@ case object DisconnectMessageType extends MessageType
 case object UnknownMessageType extends MessageType
 
 object MessageType {
-  def get(number: Int): MessageType = {
+  implicit def get(number: Int): MessageType = {
     number match {
       case 1 => ConnectMessageType
       case 2 => ConnAckMessageType

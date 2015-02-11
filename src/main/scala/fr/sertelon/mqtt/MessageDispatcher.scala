@@ -36,15 +36,15 @@ class MessageDispatcher extends Actor {
     val it = bs.iterator
     val firstByte = it.getByte
 
-    val messageType = MessageType.get((firstByte & 0xF0) >>> 4)
-    val dup = (firstByte & 0x8) >>> 3
+    val messageType = (firstByte & 0xF0) >>> 4
+    val duplicate = (firstByte & 0x8) >>> 3
     val qos = (firstByte & 0x6) >>> 1
     val retain = firstByte & 0x1
-    val length = getRemaininLength(it)
+    val remainingLength = getRemaininLength(it)
 
-    val header = MqttHeader(messageType, dup, qos, retain, length)
+    val header = MqttHeader(messageType, duplicate, qos, retain, remainingLength)
 
-    messageType match {
+    header.messageType match {
       case ConnectMessageType =>
         getConnectMessage(header, it)
       case ConnAckMessageType =>
@@ -75,14 +75,14 @@ class MessageDispatcher extends Actor {
 
     // Connect flags
     val flagByte = it.getByte
-    val hasUsername = (flagByte & 0x80) >>> 7
-    val hasPassword = (flagByte & 0x40) >>> 6
-    val hasWillRetain = (flagByte & 0x20) >>> 5
-    val willQoS = (flagByte & 0x18) >>> 3
-    val hasWill = (flagByte & 0x04) >>> 2
     val cleanSession = (flagByte & 0x02) >>> 1
+    val hasWill = (flagByte & 0x04) >>> 2
+    val willQoS = (flagByte & 0x18) >>> 3
+    val hasWillRetain = (flagByte & 0x20) >>> 5
+    val hasPassword = (flagByte & 0x40) >>> 6
+    val hasUsername = (flagByte & 0x80) >>> 7
 
-    val flags = ConnectFlags(hasUsername, hasPassword, hasWillRetain, QoS.get(willQoS), hasWill, cleanSession)
+    val flags = ConnectFlags(hasUsername, hasPassword, hasWillRetain, willQoS, hasWill, cleanSession)
     val keepAlive = (it.getByte >>> 8) + it.getByte
 
     val clientId = getUTF8String(it)._2
@@ -98,7 +98,9 @@ class MessageDispatcher extends Actor {
     val (topicLength, topic) = getUTF8String(it)
     val msgId = ((it.getByte >>> 8) + it.getByte).toChar
 
-    val payload = Some(it.mkString(","))
+    val payloadLength = header.length - topicLength - 2
+    
+    val payload = Some(it.take(payloadLength).toByteString.toArray)
 
     MqttPublish(header, PublishHeader(topic, msgId), payload)
   }
