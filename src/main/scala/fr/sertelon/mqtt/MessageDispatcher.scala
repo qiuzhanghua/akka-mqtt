@@ -1,22 +1,43 @@
 package fr.sertelon.mqtt
 
 import akka.actor._
-import akka.util.ByteString
-import akka.util.ByteIterator
+import akka.io._
+import akka.util._
+import handler._
 import model._
 import model.MqttMessage._
 
-class Decoder extends Actor {
+class MessageDispatcher extends Actor {
+  import ConnectMessageHandler._
+  import PublishMessageHandler._
+  import PingMessageHandler._
+  import SubscribeMessageHandler._
+  import Tcp._
 
-  val broker = context.system.actorOf(Props[Broker], "broker")
-  
+  val connectHandler = context.actorOf(Props[ConnectMessageHandler])
+  val pingHandler = context.actorOf(Props[PingMessageHandler])
+  val publishHandler = context.actorOf(Props[PublishMessageHandler])
+  val subscribeHandler = context.actorOf(Props[SubscribeMessageHandler])
+
   def receive = {
-    case (sender: ActorRef, bs: ByteString) =>
-      broker ! (sender, getMqttMessage(bs))
+    case Received(data) => {
+      val mqttMsg = getMqttMessage(data)
+
+      mqttMsg match {
+        case con : ConnectMqttMessage => connectHandler ! ConnectMessage(con, sender)
+        case pub : PublishMqttMessage => publishHandler ! PublishMessage(pub, sender)
+        case pin : PingMqttMessage => pingHandler ! PingMessage(pin, sender)
+        case sub : SubscribeMqttMessage => subscribeHandler ! SubscribeMessage(sub, sender)
+      }
+    }
+    case PeerClosed => {
+      // TODO clean registries
+      context stop self
+    }
   }
 
-  def getMqttMessage(bs: ByteString) = {
-	  val it = bs.iterator
+  def getMqttMessage(bs: ByteString): MqttMessage = {
+    val it = bs.iterator
     val firstByte = it.getByte
 
     val messageType = MessageType.get((firstByte & 0xF0) >>> 4)
@@ -26,25 +47,26 @@ class Decoder extends Actor {
     val length = getRemaininLength(it)
 
     val header = MqttHeader(messageType, dup, QoS.get(qos), retain, length)
-    
+
     messageType match {
       case ConnectMessageType =>
         getConnectMessage(header, it)
       case ConnAckMessageType =>
+        null
       case PublishMessageType =>
         getPublishMessage(header, it)
-      case PubAckMessageType =>
-      case PubRecMessageType =>
-      case PubRelMessageType =>
-      case PubCompMessageType =>
-      case SubscribeMessageType =>
-      case SubAckMessageType =>
-      case UnsubscribeMessageType =>
-      case UnsubAckMessageType =>
-      case PingReqMessageType =>
-      case PingRespMessageType =>
-      case DisconnectMessageType =>
-      case UnknownMessageType =>
+      case PubAckMessageType => null
+      case PubRecMessageType => null
+      case PubRelMessageType => null
+      case PubCompMessageType => null
+      case SubscribeMessageType => null
+      case SubAckMessageType => null
+      case UnsubscribeMessageType => null
+      case UnsubAckMessageType => null
+      case PingReqMessageType => null
+      case PingRespMessageType => null
+      case DisconnectMessageType => null
+      case UnknownMessageType => null
 
     }
   }
@@ -75,13 +97,13 @@ class Decoder extends Actor {
 
     MqttConnect(header, ConnectHeader(protocolName, versionNumber, flags, keepAlive), ConnectPayload(clientId, willTopic, willMessage, username, password))
   }
-  
+
   def getPublishMessage(header: MqttHeader, it: ByteIterator) = {
     val (topicLength, topic) = getUTF8String(it)
     val msgId = ((it.getByte >>> 8) + it.getByte).toChar
-  
+
     val payload = Some(it.mkString(","))
-    
+
     MqttPublish(header, PublishHeader(topic, msgId), payload)
   }
 

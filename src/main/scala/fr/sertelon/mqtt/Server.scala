@@ -23,20 +23,10 @@ class Server extends Actor {
     case CommandFailed(_ : Bind) =>
       context stop self
     case c @ Connected(remote, local) =>
-      val handler = context.actorOf(Props[SimplisticHandler])
+      val handler = context.actorOf(Props[MessageDispatcher])
       val connection = sender
       connection ! Register(handler)
   }
   
 }
     
-class SimplisticHandler extends Actor {
-  import Tcp._
-  
-  val decoder = context.system.actorOf(Props[Decoder], "decoder")
-  
-  def receive = {
-    case Received(data) => decoder ! (sender, data)
-    case PeerClosed => context stop self
-  }
-}
