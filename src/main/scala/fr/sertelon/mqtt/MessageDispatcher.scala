@@ -42,7 +42,7 @@ class MessageDispatcher extends Actor {
     val retain = firstByte & 0x1
     val length = getRemaininLength(it)
 
-    val header = MqttHeader(messageType, dup, QoS.get(qos), retain, length)
+    val header = MqttHeader(messageType, dup, qos, retain, length)
 
     messageType match {
       case ConnectMessageType =>

@@ -1,7 +1,7 @@
 package fr.sertelon.mqtt.model
 
 object QoS {
-  def get(number: Int): QoS = {
+  implicit def get(number: Int): QoS = {
     number match {
       case 0 => QoS_0
       case 1 => QoS_1
