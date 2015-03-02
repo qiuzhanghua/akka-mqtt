@@ -36,9 +36,9 @@ object MqttCodec {
     val header = MqttHeader(messageType, duplicate, qos, retain, remainingLength)
 
     header.messageType match {
-      case ConnectMessageType => decodeConnectMessage(header, it)
+      case ConnectMessageType => MqttConnect.fromByteIterator(remainingLength, it)
       case ConnAckMessageType => null
-      case PublishMessageType => decodePublishMessage(header, it)
+      case PublishMessageType => decodePublishMessage(remainingLength, it)
       case PubAckMessageType => null
       case PubRecMessageType => null
       case PubRelMessageType => null
@@ -55,52 +55,31 @@ object MqttCodec {
     }
   }
 
-  private def decodeConnectMessage(header: MqttHeader, it: ByteIterator) = {
-    val protocolName = getUTF8String(it)._2
-    val versionNumber: Int = it.getByte
-
-    // Connect flags
-    val flagByte = it.getByte
-    val cleanSession = (flagByte & 0x02) >>> 1
-    val hasWill = (flagByte & 0x04) >>> 2
-    val willQoS = (flagByte & 0x18) >>> 3
-    val hasWillRetain = (flagByte & 0x20) >>> 5
-    val hasPassword = (flagByte & 0x40) >>> 6
-    val hasUsername = (flagByte & 0x80) >>> 7
-
-    val flags = ConnectFlags(hasUsername, hasPassword, hasWillRetain, willQoS, hasWill, cleanSession)
-    val keepAlive = (it.getByte >>> 8) + it.getByte
-
-    val clientId = getUTF8String(it)._2
-    val willTopic = if (hasWill) Some(getUTF8String(it)._2) else None
-    val willMessage = if (hasWill) Some(getUTF8String(it)._2) else None
-    val username = if (hasUsername) Some(getUTF8String(it)._2) else None
-    val password = if (hasPassword) Some(getUTF8String(it)._2) else None
-
-    MqttConnect(header, ConnectHeader(protocolName, versionNumber, flags, keepAlive), ConnectPayload(clientId, willTopic, willMessage, username, password))
+  private def decodeConnectMessage(it: ByteIterator) = {
+    
   }
 
-  private def decodePublishMessage(header: MqttHeader, it: ByteIterator) = {
+  private def decodePublishMessage(remainingLength: Int, it: ByteIterator) = {
     val (topicLength, topic) = getUTF8String(it)
     val msgId = ((it.getByte >>> 8) + it.getByte).toChar
 
-    val payloadLength = header.length - topicLength - 2
+    val payloadLength = remainingLength - topicLength - 2
     
     val payload = Some(it.take(payloadLength).toByteString.toArray)
 
-    MqttPublish(header, PublishHeader(topic, msgId), payload)
+    MqttPublish(PublishHeader(topic, msgId), payload)
   }
 
   // Utils
 
-  private def getUTF8String(it: ByteIterator): (Int, String) = {
+  def getUTF8String(it: ByteIterator): (Int, String) = {
     val strLength = (it.getByte >>> 8) + it.getByte
     val bytes = new Array[Byte](strLength)
     it getBytes bytes
     (strLength + 2, ByteString(bytes).utf8String)
   }
 
-  private implicit def intToBoolean(i: Int) = if (i == 1) true else false
+  implicit def intToBoolean(i: Int) = if (i == 1) true else false
 
   private def getRemaininLength(it: ByteIterator) = {
     // Fully var because it's how it's presented in spec

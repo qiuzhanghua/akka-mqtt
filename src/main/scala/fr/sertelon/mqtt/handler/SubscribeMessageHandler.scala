@@ -6,10 +6,10 @@ import fr.sertelon.mqtt.model._
 class SubscribeMessageHandler extends Actor {
   
   def receive = {
-    case (MqttSubscribe(header, msgId, subscriptions), conn) =>
-    case (MqttSubAck(header, msgId, qos), conn) =>
-    case (MqttUnsubscribe(header, msgId, topics), conn) =>
-    case (MqttUnsubAck(header, msgId), conn) =>
+    case (MqttSubscribe(msgId, subscriptions), conn) =>
+    case (MqttSubAck(msgId, qos), conn) =>
+    case (MqttUnsubscribe(msgId, topics), conn) =>
+    case (MqttUnsubAck(msgId), conn) =>
   }
   
 }

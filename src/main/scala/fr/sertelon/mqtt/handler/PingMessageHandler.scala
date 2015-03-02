@@ -6,8 +6,8 @@ import fr.sertelon.mqtt.model._
 class PingMessageHandler extends Actor {
   
   def receive = {
-    case (MqttPingReq(header), conn) =>
-    case (MqttPingResp(header), conn) =>
+    case (MqttPingReq(), conn) =>
+    case (MqttPingResp(), conn) =>
   }
   
 }
